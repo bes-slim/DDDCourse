@@ -1,0 +1,72 @@
+﻿Event
+  EventProviderId IX
+  Data
+  Timestamp
+
+EventProvider
+  Id PK
+  Type
+  Version
+
+
+Save(IEventProvider ep)
+IEnumerable<Event> GetAllEventsForEventProvider(Guid id)
+  select data from Event where ...
+
+GetAllEventsWithSnapshot
+
+
+1) Check if EventProvider exists - if not create
+2) Check version vs events
+3) for each event
+	serialize event
+	save event
+4) Update version number of EventProvider to current + num of events
+
+
+IEventProvider
+  Guid Id
+  IEnumerable<Event> GetChanges()
+
+
+------------------------------------------
+
+Hub and Spoke
+ActiveMQ
+
+------------------------------------------
+Optimistic concurrency/Merge
+
+
+Add current version of the aggergate root on the dto and push back with the command
+
+Registry maps which events conflicts with which commands
+
+ConflictRegistry.IsConflicting():
+foreach(event in events since version)
+  foreach(command in incomming commands)
+    if(registry.IsConflicting(eventcommand))
+        return cannot merge
+can merge
+
+Command handler:
+1) Get from repository
+2) Check version (fails)
+3) Get events from storage since version
+4) Call conflict for each event/command
+     - if error return
+5) Apply command
+6) Save the aggregate
+7) if eventstore optimistic fail - repeat from 1
+
+------------------------------------------
+Versoning
+
+Use a serializer that supports additive changes (sets default values to new fields)
+OR
+Create new event: Event_v2
+Mark v1 as obsolete
+Translate versions with a Chain of Responsibility
+Hook up the translation with the EventStore
+
+------------------------------------------
